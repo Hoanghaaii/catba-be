@@ -62,10 +62,6 @@ export class AuthService {
    */
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
-    console.log(
-      '🔍 ~ login ~ tytb2-backend/src/auth/auth.service.ts:63 ~ loginDto:',
-      loginDto,
-    );
 
     const user: any = await this.validateUser(email, password);
 
