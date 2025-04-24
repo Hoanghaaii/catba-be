@@ -1,34 +1,48 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseInterceptors,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { LoginDto, RegisterDto, RefreshTokenDto } from './dto/auth.dto';
+import { ResponseInterceptor } from '../common/interceptors/response.interceptor';
+import { Public } from '../common/decorators/public.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('auth')
+@UseInterceptors(ResponseInterceptor)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  @Post('login')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
   }
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
+  @Post('register')
+  @Public()
+  async register(@Body() registerDto: RegisterDto) {
+    return this.authService.register(registerDto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
+  @Post('refresh')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+    return this.authService.refreshToken(refreshTokenDto);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async logout(@CurrentUser('id') userId: string) {
+    return this.authService.logout(userId);
   }
 }
