@@ -144,4 +144,29 @@ export class ApiKeyService {
       );
     }
   }
+  /**
+   * Lấy danh sách API key khả dụng theo userId.
+   * @param userId    ID của người dùng cần lấy API key.
+   * @returns         Danh sách các API key khả dụng.
+   */
+  async getAvailableApiKey(userId: string): Promise<ApiKey[]> {
+    try {
+      const availableKeys = await this.apiKeyModel
+        .find({
+          userId: userId,
+          status: true,
+          isUsed: false,
+          limitType: ApiKeyLiMitType.ACTIVE,
+        })
+        .exec();
+
+      return availableKeys;
+    } catch (error) {
+      console.log('MongoDB error:', error.message);
+      throw new HttpException(
+        'Failed to fetch available API keys',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

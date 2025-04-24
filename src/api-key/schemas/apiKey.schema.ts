@@ -44,6 +44,8 @@ export class ApiKey extends Document {
 
   @Prop({ type: Date })
   rentAt?: Date;
+
+  //note: them truong aiMode nuaw
 }
 
 export const ApiKeySchema = SchemaFactory.createForClass(ApiKey);
