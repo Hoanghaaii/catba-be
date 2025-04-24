@@ -9,13 +9,14 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto, RefreshTokenDto } from './dto/auth.dto';
-import { ResponseInterceptor } from '../common/interceptors/response.interceptor';
 import { Public } from '../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/rbac/guards/roles.guard';
+import { RBAC } from '../common/rbac/rbac.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('auth')
-@UseInterceptors(ResponseInterceptor)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -40,7 +41,7 @@ export class AuthController {
   }
 
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
+  @RBAC('delete', 'user', 'own')
   @HttpCode(HttpStatus.OK)
   async logout(@CurrentUser('id') userId: string) {
     return this.authService.logout(userId);

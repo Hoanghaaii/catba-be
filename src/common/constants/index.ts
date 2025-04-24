@@ -14,8 +14,6 @@ export const CACHE_TTL = {
   LONG: 60 * 60 * 24, // 1 day
 };
 
-export const MONGO_CONNECTION = 'MONGO_CONNECTION';
-
 export const JWT = {
   ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET || 'access_token_secret',
   REFRESH_TOKEN_SECRET:
