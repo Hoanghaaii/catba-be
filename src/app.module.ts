@@ -11,6 +11,7 @@ import { DatabaseModule } from './database/database.module';
 import { RedisCacheModule } from './common/cache/redis-cache.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
+import { ApiKeyModule } from './api-key/api-key.module';
 
 @Module({
   imports: [
@@ -23,15 +24,16 @@ import { AuthModule } from './auth/auth.module';
     RBACModule,
     UserModule,
     AuthModule,
+    ApiKeyModule,
   ],
   providers: [
     {
-      provide: APP_FILTER,
-      useClass: HttpExceptionFilter,
-    },
-    {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
     },
   ],
 })

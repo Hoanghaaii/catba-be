@@ -3,9 +3,8 @@ import {
   Catch,
   ArgumentsHost,
   HttpException,
-  HttpStatus,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -13,19 +12,30 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    const status = exception.getStatus
-      ? exception.getStatus()
-      : HttpStatus.INTERNAL_SERVER_ERROR;
+    const status = exception.getStatus();
 
-    const errorResponse = {
+    // Lấy response từ exception
+    const exceptionResponse = exception.getResponse();
+
+    // Nếu exceptionResponse là object (như từ ValidationPipe), lấy message và errors
+    const message =
+      typeof exceptionResponse === 'object' && exceptionResponse['message']
+        ? exceptionResponse['message']
+        : exception.message || 'An error occurred';
+
+    const errors =
+      typeof exceptionResponse === 'object' && exceptionResponse['errors']
+        ? exceptionResponse['errors']
+        : undefined;
+
+    response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
-      message: exception.message || null,
-      error: exception.getResponse()['error'] || null,
-    };
-
-    response.status(status).json(errorResponse);
+      message,
+      errors, // Thêm errors nếu có
+      error: exception.name,
+    });
   }
 }

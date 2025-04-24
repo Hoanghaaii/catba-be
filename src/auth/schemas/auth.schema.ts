@@ -6,7 +6,7 @@ export type RefreshTokenDocument = RefreshToken & Document;
 @Schema({
   timestamps: true,
 })
-export class RefreshToken {
+export class RefreshToken extends Document {
   @Prop({ required: true })
   token: string;
 

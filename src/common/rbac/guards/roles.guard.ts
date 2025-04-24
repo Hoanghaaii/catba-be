@@ -21,8 +21,6 @@ export class RolesGuard implements CanActivate {
     const rbacMetadata =
       this.reflector.get(RBAC_METADATA_KEY, context.getHandler()) || {};
 
-    console.log('RBAC Metadata:', rbacMetadata);
-
     // Kiểm tra xem có đủ thông tin cần thiết không
     if (!rbacMetadata.action || !rbacMetadata.resource) {
       // Nếu không có metadata, cho phép truy cập (hoặc bạn có thể chặn)
@@ -34,8 +32,6 @@ export class RolesGuard implements CanActivate {
     const resource = rbacMetadata.resource;
     const possession = rbacMetadata.possession || 'any';
     const isOwn = possession === 'own';
-
-    console.log(`Requested permission: ${action} ${resource} (${possession})`);
 
     // Lấy user từ request
     const request = context.switchToHttp().getRequest();
@@ -72,7 +68,6 @@ export class RolesGuard implements CanActivate {
         );
       }
     }
-
     return true;
   }
 }

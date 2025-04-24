@@ -23,15 +23,23 @@ export class AccessControlFactory {
       .createAny('profile')
       .readAny('profile')
       .updateAny('profile')
-      .deleteAny('profile');
+      .deleteAny('profile')
+      .createAny('apiKey')
+      .updateAny('apiKey')
+      .readAny('apiKey')
+      .deleteAny('apiKey');
 
     // Regular user - can manage own profile and see own user data
     ac.grant(ROLES.USER)
-      .readOwn('user')
+      .readAny('user')
       .updateOwn('user')
       .deleteOwn('user')
       .readOwn('profile')
-      .updateOwn('profile');
+      .updateOwn('profile')
+      .readOwn('apiKey')
+      .createOwn('apiKey')
+      .updateOwn('apiKey')
+      .deleteOwn('apiKey');
 
     return ac;
   }
@@ -66,7 +74,6 @@ export class AccessControlFactory {
 
     // Admin always has access to everything
     if (roleArray.includes(ROLES.ADMIN)) {
-      console.log('Admin access granted automatically');
       return true;
     }
 

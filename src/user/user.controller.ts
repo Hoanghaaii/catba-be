@@ -23,7 +23,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @RBAC('create', 'user')
+  @RBAC('create', 'user', 'any')
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }

@@ -8,6 +8,7 @@ import {
   IsEnum,
 } from 'class-validator';
 import { ROLES } from '../../common/constants';
+import { Transform } from 'class-transformer';
 
 // Create User DTO
 export class CreateUserDto {
@@ -85,10 +86,11 @@ export class UserQueryDto {
   search?: string;
 
   @IsOptional()
-  @IsEnum(Object.values(ROLES))
-  role?: string;
-
-  @IsOptional()
   @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
   isActive?: boolean;
 }
