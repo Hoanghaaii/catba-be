@@ -13,6 +13,7 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { ApiKeyModule } from './api-key/api-key.module';
 import { AiModule } from './ai/ai.module';
+import { PromptModule } from './prompt/prompt.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AiModule } from './ai/ai.module';
     AuthModule,
     ApiKeyModule,
     AiModule,
+    PromptModule,
   ],
   providers: [
     {

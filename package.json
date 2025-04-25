@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs/bullmq": "^11.0.2",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
@@ -31,6 +32,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "accesscontrol": "^2.2.1",
     "bcryptjs": "^3.0.2",
+    "bullmq": "^5.50.0",
     "cache-manager": "^6.4.2",
     "cache-manager-redis-store": "^3.0.1",
     "class-transformer": "^0.5.1",
