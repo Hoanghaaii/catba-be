@@ -43,10 +43,11 @@ async function bootstrap() {
 
   // Start server
   const port = configService.getOrThrow<number>('app.port');
+  const db = configService.getOrThrow('app.mongo.uri');
   await app.listen(port);
   console.log(
     `Application is running on: http://localhost:${port}/${apiPrefix}`,
-    5,
   );
+  console.log(`Database: ${db}`);
 }
 bootstrap();

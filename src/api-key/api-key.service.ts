@@ -15,19 +15,17 @@ import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'src/user/schemas/user.schema';
 import { ROLES } from 'src/common/constants';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class ApiKeyService {
   constructor(
     @InjectModel(ApiKey.name) private readonly apiKeyModel: Model<ApiKey>,
-    @InjectModel(User.name) private readonly userModel: Model<User>,
+    private readonly userService: UserService,
   ) {}
+
   async create(dto: CreateApiKeyDto, user: User) {
     try {
-      console.log(
-        '🔍 ~ create ~ tytb2-backend/src/api-key/api-key.service.ts:25 ~ dto:',
-        dto,
-      );
       const isAdmin = user.role === ROLES.ADMIN;
       const isAdminOverride = isAdmin && dto.userId;
 
@@ -42,15 +40,21 @@ export class ApiKeyService {
         if (!Types.ObjectId.isValid(dto.userId)) {
           throw new BadRequestException('Invalid userId format');
         }
-        // Kiểm tra sự tồn tại của userId
-        const existingUser = await this.userModel.findById(dto.userId).exec();
 
-        if (!existingUser) {
+        // Kiểm tra sự tồn tại của userId bằng UserService
+        try {
+          const existingUser = await this.userService.findById(dto.userId);
+          if (!existingUser) {
+            throw new BadRequestException(
+              `User with ID '${dto.userId}' does not exist`,
+            );
+          }
+          ownerId = new Types.ObjectId(dto.userId);
+        } catch (error) {
           throw new BadRequestException(
             `User with ID '${dto.userId}' does not exist`,
           );
         }
-        ownerId = new Types.ObjectId(dto.userId);
       } else {
         // Giả sử user._id đã là Types.ObjectId
         if (!user._id) {
@@ -92,154 +96,37 @@ export class ApiKeyService {
   }
 
   /**
-   * Tạo nhiều API key cùng một lúc từ danh sách mà không phụ thuộc vào hàm create.
+   * Tạo nhiều API key cùng một lúc từ danh sách.
    * @param dto    DTO chứa mảng các API key cần tạo.
    * @param user   Thông tin người dùng đang thực hiện request.
-   * @returns      Kết quả tạo API key với danh sách thành công và lỗi.
+   * @returns      Danh sách các API key đã được tạo thành công.
    */
   async bulkCreate(dto: BulkCreateApiKeyDto, user: User) {
     try {
-      console.log(
-        '🔍 ~ bulkCreate ~ tytb2-backend/src/api-key/api-key.service.ts ~ dto:',
-        dto,
-      );
-
-      const isAdmin = user.role === ROLES.ADMIN;
-      const createdKeys: ApiKeyDocument[] = [];
+      // Khai báo rõ ràng kiểu dữ liệu
+      const createdKeys: any[] = [];
       const errors: { key: string; error: string }[] = [];
 
-      // Bước 1: Thu thập tất cả keys để kiểm tra trùng lặp
-      const allKeys = dto.apiKeys.map((apiKey) => apiKey.key);
-
-      // Bước 2: Kiểm tra keys trùng lặp trong database
-      const existingKeys = await this.apiKeyModel
-        .find({
-          key: { $in: allKeys },
-        })
-        .exec();
-
-      const existingKeyMap = new Map();
-      existingKeys.forEach((key) => {
-        existingKeyMap.set(key.key, true);
-      });
-
-      // Bước 3: Tạo danh sách userIds cần kiểm tra (nếu admin gửi userId)
-      const userIds = dto.apiKeys
-        .filter((item) => isAdmin && item.userId)
-        .map((item) => item.userId as string); // Type assertion ở đây
-
-      const uniqueUserIds = [...new Set(userIds)];
-      let userMap = new Map();
-
-      // Bước 4: Kiểm tra tồn tại của userIds (nếu có)
-      if (uniqueUserIds.length > 0) {
-        // Lọc chỉ những userId hợp lệ
-        const validUserIds = uniqueUserIds.filter(
-          (id) => id !== undefined && Types.ObjectId.isValid(id),
-        );
-
-        if (validUserIds.length > 0) {
-          const existingUsers = await this.userModel
-            .find({
-              _id: { $in: validUserIds.map((id) => new Types.ObjectId(id)) },
-            })
-            .exec();
-
-          existingUsers.forEach((user) => {
-            userMap.set(user._id.toString(), user);
-          });
-        }
-      }
-
-      // Bước 5: Xử lý từng apiKey trong mảng
-      for (const apiKeyDto of dto.apiKeys) {
+      // Xử lý từng API key trong mảng
+      for (let i = 0; i < dto.apiKeys.length; i++) {
         try {
-          // Kiểm tra key đã tồn tại
-          if (existingKeyMap.has(apiKeyDto.key)) {
-            errors.push({
-              key: apiKeyDto.key,
-              error: `Duplicate API key '${apiKeyDto.key}' already exists`,
-            });
-            continue;
-          }
+          const keyDto = dto.apiKeys[i];
+          const createdKey = await this.create(keyDto, user);
 
-          // Xác định userId
-          let ownerId: Types.ObjectId;
-          if (isAdmin && apiKeyDto.userId) {
-            // Trường hợp admin tạo key cho user khác
-            if (!Types.ObjectId.isValid(apiKeyDto.userId)) {
-              errors.push({
-                key: apiKeyDto.key,
-                error: `Invalid userId format: '${apiKeyDto.userId}'`,
-              });
-              continue;
-            }
-
-            // Kiểm tra user tồn tại
-            if (!userMap.has(apiKeyDto.userId)) {
-              errors.push({
-                key: apiKeyDto.key,
-                error: `User with ID '${apiKeyDto.userId}' does not exist`,
-              });
-              continue;
-            }
-
-            // Ở đây chúng ta đã kiểm tra apiKeyDto.userId không phải undefined
-            ownerId = new Types.ObjectId(apiKeyDto.userId as string);
-          } else {
-            // User thông thường tạo key cho chính họ
-            if (!user._id) {
-              errors.push({
-                key: apiKeyDto.key,
-                error: 'User _id is missing',
-              });
-              continue;
-            }
-            ownerId = user._id;
-          }
-
-          // Kiểm tra aiModelId
-          if (
-            !apiKeyDto.aiModelId ||
-            !Types.ObjectId.isValid(apiKeyDto.aiModelId)
-          ) {
-            errors.push({
-              key: apiKeyDto.key,
-              error: 'Invalid aiModelId format',
-            });
-            continue;
-          }
-
-          // Tạo document API key mới
-          const newApiKey: Partial<ApiKey> = {
-            key: apiKeyDto.key,
-            userId: ownerId,
-            limitType: apiKeyDto.limitType ?? ApiKeyLiMitType.ACTIVE,
-            totalToken: apiKeyDto.totalToken ?? 0,
-            isAdminOwner: isAdmin,
-            rentAt: isAdmin ? new Date() : undefined,
-            status: true,
-            totalUsed: 0,
-            usedDay: 0,
-            isUsed: false,
-            aiModelId: new Types.ObjectId(apiKeyDto.aiModelId),
-          };
-
-          const apiKeyDoc = new this.apiKeyModel(newApiKey);
-          const savedApiKey = await apiKeyDoc.save();
-          createdKeys.push(savedApiKey);
-
-          // Thêm key mới vào map để kiểm tra trùng lặp cho các key tiếp theo
-          existingKeyMap.set(apiKeyDto.key, true);
+          // Thêm vào mảng kết quả bằng spread operator để tránh lỗi kiểu
+          createdKeys.push(
+            createdKey.toObject ? createdKey.toObject() : createdKey,
+          );
         } catch (error) {
+          // Ghi lại lỗi cùng với key để báo cáo
           errors.push({
-            key: apiKeyDto.key,
+            key: dto.apiKeys[i].key,
             error: error.message || String(error),
           });
         }
       }
 
-      // Trả về kết quả
+      // Trả về kết quả với số lượng key đã tạo và danh sách lỗi nếu có
       return {
         success: createdKeys.length,
         total: dto.apiKeys.length,
@@ -248,7 +135,10 @@ export class ApiKeyService {
       };
     } catch (error) {
       console.log('MongoDB error:', error.message);
-      throw error;
+      throw new HttpException(
+        'Failed to bulk create API keys',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
