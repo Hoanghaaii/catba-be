@@ -24,8 +24,9 @@ export class ApiKeyController {
   @RBAC('create', 'apiKey', 'own')
   async bulkCreate(
     @Body() dto: BulkCreateApiKeyDto,
+
     @CurrentUser() user: User,
   ) {
-    return this.apiKeyService.bulkCreate(dto.apiKeys, user);
+    return this.apiKeyService.bulkCreate(dto, user);
   }
 }

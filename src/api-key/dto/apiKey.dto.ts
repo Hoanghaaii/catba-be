@@ -1,4 +1,5 @@
 import {
+  ArrayMinSize,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -42,11 +43,14 @@ export class CreateApiKeyDto {
   /** Ngày thuê key (nếu có) */
   @IsOptional()
   rentAt?: Date;
+
+  @IsMongoId()
+  aiModelId: string;
 }
 
 export class BulkCreateApiKeyDto {
   @IsArray()
-  @ValidateNested({ each: true })
+  @ArrayMinSize(1, { message: 'Phải có ít nhất một API key' })
   @Type(() => CreateApiKeyDto)
   apiKeys: CreateApiKeyDto[];
 }

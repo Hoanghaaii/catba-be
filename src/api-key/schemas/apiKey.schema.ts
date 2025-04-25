@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type ApiKeyDocument = ApiKey & Document;
 
@@ -13,8 +13,8 @@ export class ApiKey extends Document {
   @Prop({ required: true, type: String, unique: true })
   key: string;
 
-  @Prop({ required: true })
-  userId: string;
+  @Prop({ required: true, type: Types.ObjectId })
+  userId: Types.ObjectId;
 
   @Prop({ required: true, type: Boolean, default: true })
   status: boolean;
@@ -45,7 +45,8 @@ export class ApiKey extends Document {
   @Prop({ type: Date })
   rentAt?: Date;
 
-  //note: them truong aiMode nuaw
+  @Prop({ required: true, type: Types.ObjectId })
+  aiModelId: Types.ObjectId;
 }
 
 export const ApiKeySchema = SchemaFactory.createForClass(ApiKey);
