@@ -51,7 +51,7 @@ export class AuthService {
 
       return user;
     } catch (error) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw error;
     }
   }
 
